@@ -46,8 +46,8 @@
           var availableTags = {{  venues|tojson }};
           $( "#venue" ).autocomplete({
             source: availableTags,
-            delay: 300,
-            minLength: 3
+            delay: 250,
+            minLength: 3,
           });
         } );
       </script>
@@ -67,15 +67,30 @@
       });
     </script>
 
+    <script>
+      function changeText() {
+         document.getElementById('makeplaylist').innerHTML = 'Creating Playlist...';
+        };
+    </script>
+
+
+
 </head>
 
     <div class="container">
         <div class="header">
-            <h3 class="text-muted">Python Flask App</h3>
+            <h4 class="text-muted">Discover What's Around the Corner</h4>
+        </div>
+
+        <div class="lead-image">
+          <img src="/static/listenlocalimage.png" alt="Listen Local" height="125" width="125"></img>
         </div>
  
         <div class="jumbotron">
-            <h4>Set dates, choose venue, click button, enjoy tunes!</h4>
+            <p>1. set dates</p>
+            <p>2. choose venue</p>
+            <p>3. click button</p>
+            <p>4. enjoy tunes!</p>
             <p class="lead"></p>
             <p>
                 <label for="from">From</label>
@@ -93,18 +108,23 @@
         <p></p>
         <div>
           <form>
-            <a href=# id=submit_date><button class='btn btn-default'>Create Playlist!</button></a>
+            <a href=# id=submit_date><button class='btn btn-default' onclick='changeText()'>Create Playlist!</button></a>
           </form>
-        <p id=result>?</p>
+        <p id='makeplaylist' style='color:gray'>What are you waiting for?</p>
+        <p id=result style='color:gray'></p>
         </div>
+
+        <br><br>
         
-        {% for item in sorted_array%}
-		    <p> {{ item }} </p>
-		    {% endfor %}
+		    <p>
+            {{ logged_in }} 
+        </p>
  
-        <footer class="footer">
-            <p>&copy; Andrew Feierman 2017</p>
-        </footer>
  
     </div>
+        
+    <footer class="footer">
+        <p style="font-size:12px"> created by <a href="https://github.com/afeierman"> Andrew Feierman</a>, available on <a href="https://github.com/afeierman/listen-local"> github </a> </p>
+    </footer>
+
 {% endblock %}

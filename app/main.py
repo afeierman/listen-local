@@ -1,17 +1,22 @@
 import json
-from flask import Flask, request, redirect, g, render_template, jsonify
+from flask import Flask, request, redirect, g, render_template, jsonify, flash
 import requests
 import base64
 import urllib
 import spotipy
 import spotipy.util as util
 import pandas as pd
+import sqlite3
 import re
+# from concert_finder import run_listen_local
 
 # Authentication Steps, parameters, and responses are defined at https://developer.spotify.com/web-api/authorization-guide/
 # Visit this url to see all the steps, parameters, and expected response. 
 
 app = Flask(__name__)
+
+#use a secret key to set our session...?
+app.secret_key = 'its a string of random bytesssssss0 to the computer'
 
 #Concert data, scraped from songkick.com
 concerts = pd.read_csv("concerts_clean.csv", index_col=0, encoding='utf-8')
@@ -102,27 +107,26 @@ def callback():
     playlist_data = json.loads(playlists_response.text)
     
     # Combine profile and playlist data to display
-    display_arr = ["You are logged in as: "] + [profile_data['id']]
+    display_arr = "You are logged into Spotify as: " + profile_data['id']
 
     #reluctantly setting global variables for spotipy
     spotipy_token = access_token
     spotipy_username = profile_data['id']
 
     #return data for the display
-    return render_template("index.html", sorted_array=display_arr, concerts = concerts, venues = venues)
+    return render_template("index.html", logged_in=display_arr, concerts = concerts, venues = venues)
 
 @app.route('/create_playlist')
 def create_playlist():
-
     try:
         datefrom = request.args.get('from', 0, type=str) 
         datefrom = datefrom.replace("/", "-")
         dateto = request.args.get('to', 0, type=str)
         dateto = dateto.replace("/", "-")
         venue = request.args.get('venue', 0, type=str)
-        user_message = "Playlist created! " + datefrom + " - " + dateto + " at " + venue
-        run_listen_local(venue)
-        return jsonify(result=user_message)
+        success_message = "Success! Playlist created. Check Spotify for a playlist called: " + datefrom + " to " + dateto + " at " + venue
+        run_listen_local(venue, start_date = datefrom, end_date = dateto)
+        return jsonify(result=success_message)
     except Exception as e:
         return jsonify(result="Uh oh, something went wrong. Did you fill in the date range and select a venue?" + str(e))
 
@@ -134,7 +138,7 @@ def get_venue_artists(venue, start_date = "2017-01-01", end_date = "2017-12-31")
     for show in concerts.loc[concerts['venue'] == venue, ['date', 'artist']].itertuples():
         if show[1] in concert_dates:
             artists.append(show)
-    return artists
+    return set(artists)
 
 def get_artist_ids(artists):
     sp = spotipy.Spotify()
@@ -142,10 +146,10 @@ def get_artist_ids(artists):
     for artist in artists:
         search = sp.search(q=artist, type = 'artist', limit = 1)
         try:
-            artist_plus_ids.append((search['artists']['items'][0]['name'] ,  search['artists']['items'][0]['id']))
+            artist_plus_ids.append((search['artists']['items'][0]['name'],  search['artists']['items'][0]['id']))
         except IndexError:
             pass
-    return artist_plus_ids
+    return set(artist_plus_ids)
 
 def get_venue_artist_ids(venue, start_date = "2017-01-01", end_date = "2017-12-31"):
     sp = spotipy.Spotify()
@@ -157,14 +161,14 @@ def get_venue_artist_ids(venue, start_date = "2017-01-01", end_date = "2017-12-3
             artist_plus_ids.append((search['artists']['items'][0]['name'] ,  search['artists']['items'][0]['id']))
         except IndexError:
             pass
-    return artist_plus_ids
+    return set(artist_plus_ids)
 
 def create_venue_songlist(venue, start_date = "2017-01-01", end_date = "2017-12-31"):
     sp = spotipy.Spotify()
     songlist = []
     num_tracks = 5
     if (start_date == "2017-01-01") and (end_date == "2017-12-31"):
-        num_tracks = 1
+        num_tracks = 3
     for artist in get_venue_artist_ids(venue, start_date, end_date):
         artist_tracks = sp.artist_top_tracks(artist[1])['tracks']
         if len(artist_tracks) >= num_tracks:
@@ -197,7 +201,7 @@ def run_listen_local(venue, start_date = "2017-03-01", end_date = "2017-12-31"):
     track_ids = playlist_prepped[1]
     if spotipy_token:
         sp = spotipy.Spotify(auth=spotipy_token)
-        sp.trace = False #Not sure if this is needed
+        sp.trace = False #This can be set to True to help with debugging
         sp.user_playlist_create(spotipy_username, playlist_title)
         playlists = sp.user_playlists(spotipy_username)
         for playlist in playlists['items']:
