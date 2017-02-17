@@ -1,17 +1,16 @@
 import json
-from flask import Flask, request, redirect, g, render_template, jsonify, flash
+from flask import Flask, request, redirect, render_template, jsonify
 import requests
+import os
 import base64
 import urllib
 import spotipy
-import spotipy.util as util
 import pandas as pd
-import sqlite3
-import re
+
 # from concert_finder import run_listen_local
 
 # Authentication Steps, parameters, and responses are defined at https://developer.spotify.com/web-api/authorization-guide/
-# Visit this url to see all the steps, parameters, and expected response. 
+# Visit this url to see all the steps, parameters, and expected response.
 
 app = Flask(__name__)
 
@@ -19,13 +18,13 @@ app = Flask(__name__)
 app.secret_key = 'its a string of random bytesssssss0 to the computer'
 
 #Concert data, scraped from songkick.com
-concerts = pd.read_csv("concerts_clean.csv", index_col=0, encoding='utf-8')
+concerts = pd.read_csv("~/listen-local/app/concerts_clean.csv", index_col=0, encoding='utf-8')
 concerts['date'] = pd.to_datetime(concerts['date'], format = "%Y/%m/%d")
 venues = list(set(concerts['venue']))
 
 #  Client Keys
-CLIENT_ID = ""
-CLIENT_SECRET = ""
+CLIENT_ID = os.environ['CLIENT_ID']
+CLIENT_SECRET = os.environ['CLIENT_SECRET']
 
 # Spotify URLS
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
@@ -36,9 +35,11 @@ SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
 
 
 # Server-side Parameters
-CLIENT_SIDE_URL = "http://127.0.0.1"
-PORT = 8080
-REDIRECT_URI = "{}:{}/callback/q".format(CLIENT_SIDE_URL, PORT)
+CLIENT_SIDE_URL = "https://afeierman.pythonanywhere.com"
+#Removing port for python anywhere hosting. add these lines if you want to run locally
+# PORT = 8080
+# REDIRECT_URI = "{}:{}/callback/q".format(CLIENT_SIDE_URL, PORT)
+REDIRECT_URI = "{}/callback/q".format(CLIENT_SIDE_URL)
 SCOPE = "playlist-modify-public playlist-modify-private"
 STATE = ""
 SHOW_DIALOG_bool = True
@@ -105,7 +106,7 @@ def callback():
     playlist_api_endpoint = "{}/playlists".format(profile_data["href"])
     playlists_response = requests.get(playlist_api_endpoint, headers=authorization_header)
     playlist_data = json.loads(playlists_response.text)
-    
+
     # Combine profile and playlist data to display
     display_arr = "You are logged into Spotify as: " + profile_data['id']
 
@@ -119,7 +120,7 @@ def callback():
 @app.route('/create_playlist')
 def create_playlist():
     try:
-        datefrom = request.args.get('from', 0, type=str) 
+        datefrom = request.args.get('from', 0, type=str)
         datefrom = datefrom.replace("/", "-")
         dateto = request.args.get('to', 0, type=str)
         dateto = dateto.replace("/", "-")
@@ -128,7 +129,7 @@ def create_playlist():
         run_listen_local(venue, start_date = datefrom, end_date = dateto)
         return jsonify(result=success_message)
     except Exception as e:
-        return jsonify(result="Uh oh, something went wrong. Did you fill in the date range and select a venue?" + str(e))
+        return jsonify(result="Uh oh, something went wrong. Did you fill in the date range and select a venue?" + "\n Error: " + str(e))
 
 #concert retrieval functions below
 
@@ -214,4 +215,4 @@ def run_listen_local(venue, start_date = "2017-03-01", end_date = "2017-12-31"):
         print("Authentication failed. Can't get token.")
 
 if __name__ == "__main__":
-    app.run(debug=True,port=PORT)
+    app.run(debug=False,port=PORT)

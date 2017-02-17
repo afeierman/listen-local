@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
-{% block body %} 
+{% block body %}
 
 <head>
     <title>Listen Local Alpha</title>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+      <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
       <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
       <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
       <script>
@@ -28,7 +28,7 @@
           .on( "change", function() {
             from.datepicker( "option", "maxDate", getDate( this ) );
           });
-     
+
         function getDate( element ) {
           var date;
           try {
@@ -85,12 +85,14 @@
         <div class="lead-image">
           <img src="/static/listenlocalimage.png" alt="Listen Local" height="125" width="125"></img>
         </div>
- 
+
         <div class="jumbotron">
-            <p>1. set dates</p>
-            <p>2. choose venue</p>
-            <p>3. click button</p>
-            <p>4. enjoy tunes!</p>
+            <div class="instructions">
+                <p>1. set dates</p>
+                <p>2. choose venue</p>
+                <p>3. click button</p>
+                <p>4. enjoy tunes!</p>
+            </div>
             <p class="lead"></p>
             <p>
                 <label for="from">From</label>
@@ -115,16 +117,16 @@
         </div>
 
         <br><br>
-        
-		    <p>
-            {{ logged_in }} 
+
+		<p style="font-size:12px">
+            {{ logged_in }}
         </p>
- 
- 
+
+
     </div>
-        
+
     <footer class="footer">
-        <p style="font-size:12px"> created by <a href="https://github.com/afeierman"> Andrew Feierman</a>, available on <a href="https://github.com/afeierman/listen-local"> github </a> </p>
+        <p style="font-size:11px"> created by <a href="https://github.com/afeierman"> Andrew Feierman</a>, available on <a href="https://github.com/afeierman/listen-local"> github </a> </p>
     </footer>
 
 {% endblock %}
