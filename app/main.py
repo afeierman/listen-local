@@ -15,7 +15,7 @@ import pandas as pd
 app = Flask(__name__)
 
 #use a secret key to set our session...?
-app.secret_key = 'its a string of random bytesssssss0 to the computer'
+app.secret_key = ''
 
 #Concert data, scraped from songkick.com
 concerts = pd.read_csv("~/listen-local/app/concerts_clean.csv", index_col=0, encoding='utf-8')
