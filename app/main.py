@@ -11,7 +11,8 @@ import spotipy
 
 from listen_local import *
 
-# Authentication Steps, parameters, and responses are defined at https://developer.spotify.com/web-api/authorization-guide/
+# Authentication Steps, parameters, and responses are defined at:
+#    https://developer.spotify.com/web-api/authorization-guide/
 # Visit this url to see all the steps, parameters, and expected response.
 
 app = Flask(__name__)
@@ -20,7 +21,8 @@ app = Flask(__name__)
 app.secret_key = 'longsecretkey'
 
 #Concert data, scraped from songkick.com
-concerts = pd.read_csv("~/listen-local/app/concerts_clean.csv", index_col=0, encoding='utf-8')
+concerts = pd.read_csv("~/listen-local/app/concerts_clean.csv", index_col=0,
+                       encoding='utf-8')
 concerts['date'] = pd.to_datetime(concerts['date'], format = "%Y/%m/%d")
 venues = list(set(concerts['venue']))
 
@@ -38,7 +40,7 @@ SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
 
 # Server-side Parameters
 CLIENT_SIDE_URL = "https://afeierman.pythonanywhere.com"
-#Removing port for python anywhere hosting. add these lines if you want to run locally
+# add these lines if you want to run locally
 # PORT = 8080
 # REDIRECT_URI = "{}:{}/callback/q".format(CLIENT_SIDE_URL, PORT)
 REDIRECT_URI = "{}/callback/q".format(CLIENT_SIDE_URL)
@@ -52,7 +54,7 @@ SPOTIPY_CLIENT_ID = CLIENT_ID
 SPOTIPY_CLIENT_SECRET = CLIENT_SECRET
 SPOTIPY_REDIRECT_URI = REDIRECT_URI
 
-#globals that I should fix later, once I understand web frameworks and authorization more
+#globals that I should fix later
 spotipy_token = ""
 spotipy_username = ""
 
@@ -68,7 +70,8 @@ auth_query_parameters = {
 @app.route("/")
 def index():
     # Auth Step 1: Authorization
-    url_args = "&".join(["{}={}".format(key,urllib.quote(val)) for key,val in auth_query_parameters.iteritems()])
+    url_args = "&".join(["{}={}".format(
+        key,urllib.quote(val)) for key,val in auth_query_parameters.iteritems()])
     auth_url = "{}/?{}".format(SPOTIFY_AUTH_URL, url_args)
     return redirect(auth_url)
 
@@ -86,7 +89,8 @@ def callback():
     }
     base64encoded = base64.b64encode("{}:{}".format(CLIENT_ID, CLIENT_SECRET))
     headers = {"Authorization": "Basic {}".format(base64encoded)}
-    post_request = requests.post(SPOTIFY_TOKEN_URL, data=code_payload, headers=headers)
+    post_request = requests.post(SPOTIFY_TOKEN_URL, data=code_payload,
+                                 headers=headers)
 
     # Auth Step 5: Tokens are Returned to Application
     response_data = json.loads(post_request.text)
@@ -101,12 +105,14 @@ def callback():
 
     # Get profile data
     user_profile_api_endpoint = "{}/me".format(SPOTIFY_API_URL)
-    profile_response = requests.get(user_profile_api_endpoint, headers=authorization_header)
+    profile_response = requests.get(user_profile_api_endpoint,
+                                    headers=authorization_header)
     profile_data = json.loads(profile_response.text)
 
     # Get user playlist data (currently unused)
     playlist_api_endpoint = "{}/playlists".format(profile_data["href"])
-    playlists_response = requests.get(playlist_api_endpoint, headers=authorization_header)
+    playlists_response = requests.get(playlist_api_endpoint,
+                                      headers=authorization_header)
     playlist_data = json.loads(playlists_response.text)
 
     # Combine profile and playlist data to display
@@ -117,7 +123,8 @@ def callback():
     spotipy_username = profile_data['id']
 
     #return data for the display
-    return render_template("index.html", logged_in=display_arr, concerts = concerts, venues = venues)
+    return render_template("index.html", logged_in=display_arr,
+                           concerts = concerts, venues = venues)
 
 @app.route('/create_playlist')
 def create_playlist():
@@ -127,23 +134,30 @@ def create_playlist():
         dateto = request.args.get('to', 0, type=str)
         dateto = dateto.replace("/", "-")
         venue = request.args.get('venue', 0, type=str)
-        success_message = "Success! Playlist created. Check Spotify for a playlist called: " + datefrom + " to " + dateto + " at " + venue
+        success_message = "Success! Playlist created. Check Spotify for a " \
+                          "playlist called: " + datefrom + " to " + dateto + \
+                          " at " + venue
         run_listen_local(venue, start_date = datefrom, end_date = dateto)
         return jsonify(result=success_message)
     except Exception as e:
-        return jsonify(result="Uh oh, something went wrong. Did you fill in the date range and select a venue?" + "\n Error: " + str(e))
+        return jsonify(result="Uh oh, something went wrong. Did you fill in "
+                              "the date range and select a venue?" +
+                              "\n Error: " + str(e))
 
 
-
-#create_venue_songlist_ids returns a tuple with the playlist title, and a list of Spotify song IDs
+#create_venue_songlist_ids returns a tuple with the playlist title,
+# and a list of Spotify song IDs
 #main function below (this is what the webapp calls)
 
-def run_listen_local(venue, start_date = "2017-03-01", end_date = "2017-12-31"):
+def run_listen_local(venue, start_date = "2017-03-01",
+                     end_date = "2017-12-31"):
     global spotipy_token
     global spotipy_username
+
     playlist_prepped = create_venue_songlist_ids(venue, start_date, end_date)
     playlist_title = playlist_prepped[0]
     track_ids = playlist_prepped[1]
+
     if spotipy_token:
         sp = spotipy.Spotify(auth=spotipy_token)
         sp.trace = False #This can be set to True to help with debugging
@@ -153,7 +167,8 @@ def run_listen_local(venue, start_date = "2017-03-01", end_date = "2017-12-31"):
             if playlist['name'] == playlist_title:
                 playlist_id = playlist['id']
                 break
-        results = sp.user_playlist_add_tracks(spotipy_username, playlist_id, track_ids)
+        results = sp.user_playlist_add_tracks(spotipy_username,
+                                              playlist_id, track_ids)
         print("Playlist created! %s") % (results)
     else:
         print("Authentication failed. Can't get token.")
