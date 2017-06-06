@@ -2,6 +2,7 @@
 .spkeys
 *.pyc
 *.pyo
+*.idea
 env
 dist
 config.py
