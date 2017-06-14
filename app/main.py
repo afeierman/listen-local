@@ -27,8 +27,14 @@ concerts['date'] = pd.to_datetime(concerts['date'], format = "%Y/%m/%d")
 venues = list(set(concerts['venue']))
 
 #  Client Keys
-CLIENT_ID = os.environ['CLIENT_ID']
-CLIENT_SECRET = os.environ['CLIENT_SECRET']
+
+def __get_attribute(prop, project):
+    result = re.search(r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format(prop),
+                       open(project + '/config.py').read())
+    return result.group(1)
+
+CLIENT_ID = __get_attribute('__id__', 'listen-local')
+CLIENT_SECRET = __get_attribute('__secret_', 'listen-local')
 
 # Spotify URLS
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
