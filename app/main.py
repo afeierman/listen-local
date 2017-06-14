@@ -60,9 +60,6 @@ SPOTIPY_CLIENT_ID = CLIENT_ID
 SPOTIPY_CLIENT_SECRET = CLIENT_SECRET
 SPOTIPY_REDIRECT_URI = REDIRECT_URI
 
-#globals that I should fix later
-spotipy_token = ""
-spotipy_username = ""
 
 auth_query_parameters = {
     "response_type": "code",
@@ -155,17 +152,20 @@ def create_playlist():
 # and a list of Spotify song IDs
 #main function below (this is what the webapp calls)
 
-def run_listen_local(venue, start_date = "2017-03-01",
-                     end_date = "2017-12-31"):
+def run_listen_local(venue, start_date = "2017-06-15",
+                     end_date = "2017-12-31", tracks = 5):
     global spotipy_token
     global spotipy_username
 
-    playlist_prepped = create_venue_songlist_ids(venue, start_date, end_date)
+    playlist_prep = SpotifyPlaylistMaker(start_date = start_date,
+                                            end_date = end_date, tracks_to_retrieve = tracks)
+
+    playlist_prepped = playlist_prep.create_venue_songlist_ids(venue)
     playlist_title = playlist_prepped[0]
     track_ids = playlist_prepped[1]
 
-    if spotipy_token:
-        sp = spotipy.Spotify(auth=spotipy_token)
+    if SPOTIPY_CLIENT_ID:
+        sp = spotipy.Spotify(auth=SPOTIPY_CLIENT_SECRET)
         sp.trace = False #This can be set to True to help with debugging
         sp.user_playlist_create(spotipy_username, playlist_title)
         playlists = sp.user_playlists(spotipy_username)
