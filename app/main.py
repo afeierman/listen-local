@@ -1,26 +1,24 @@
 import json
 import requests
-import os
 import base64
 import urllib
 
 import pandas as pd
 from flask import Flask, request, redirect, render_template, jsonify
-
 import spotipy
 
 from listen_local import *
 
 # Authentication Steps, parameters, and responses are defined at:
-#    https://developer.spotify.com/web-api/authorization-guide/
+# https://developer.spotify.com/web-api/authorization-guide/
 # Visit this url to see all the steps, parameters, and expected response.
 
 app = Flask(__name__)
 
-#use a secret key to set our session...?
+# use a secret key to set our session...?
 app.secret_key = 'longsecretkey'
 
-#Concert data, scraped from songkick.com
+# Concert data, scraped from songkick.com
 concerts = pd.read_csv("~/listen-local/app/concerts_clean.csv", index_col=0,
                        encoding='utf-8')
 concerts['date'] = pd.to_datetime(concerts['date'], format = "%Y/%m/%d")
@@ -121,11 +119,11 @@ def callback():
     # Combine profile and playlist data to display
     display_arr = "You are logged into Spotify as: " + profile_data['id']
 
-    #reluctantly setting global variables for spotipy
+    # reluctantly setting global variables for spotipy
     spotipy_token = access_token
     spotipy_username = profile_data['id']
 
-    #return data for the display
+    # return data for the display
     return render_template("index.html", logged_in=display_arr,
                            concerts = concerts, venues = venues)
 
@@ -148,9 +146,9 @@ def create_playlist():
                               "\n Error: " + str(e))
 
 
-#create_venue_songlist_ids returns a tuple with the playlist title,
+# create_venue_songlist_ids returns a tuple with the playlist title,
 # and a list of Spotify song IDs
-#main function below (this is what the webapp calls)
+# main function below (this is what the webapp calls)
 
 def run_listen_local(venue, start_date = "2017-06-15",
                      end_date = "2017-12-31", tracks = 5):
@@ -158,7 +156,8 @@ def run_listen_local(venue, start_date = "2017-06-15",
     global spotipy_username
 
     playlist_prep = SpotifyPlaylistMaker(start_date = start_date,
-                                            end_date = end_date, tracks_to_retrieve = tracks)
+                                            end_date = end_date,
+                                         tracks_to_retrieve = tracks)
 
     playlist_prepped = playlist_prep.create_venue_songlist_ids(venue)
     playlist_title = playlist_prepped[0]
