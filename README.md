@@ -14,6 +14,6 @@ It leverages the Songkick and Spotify APIs to seamlessly look up venues and crea
 This project was originally created as part of the NYC Data Science Academy curriculum.
 
 ##### Planned Feature Improvements
-- [] Full Integration with Songkick API
-- [] SoundCloud API Integration
-- [] Improved login and authentication process with Spotify
+- [ ] Full Integration with Songkick API
+- [ ] SoundCloud API Integration
+- [ ] Improved login and authentication process with Spotify
