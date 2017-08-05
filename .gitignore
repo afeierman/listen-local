@@ -5,4 +5,4 @@
 *.idea
 env
 dist
-config.py
+app/config.py

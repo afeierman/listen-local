@@ -6,7 +6,9 @@ import urllib
 
 import pandas as pd
 from flask import Flask, request, redirect, render_template, jsonify
-from listen_local import *
+from listen_local.listen_local import SongkickClient, SpotifyPlaylistMaker
+
+import spotipy
 
 # Authentication Steps, parameters, and responses are defined at:
 # https://developer.spotify.com/web-api/authorization-guide/
@@ -15,21 +17,19 @@ from listen_local import *
 app = Flask(__name__)
 
 # use a secret key to set our session...?
-app.secret_key = 'longsecretkey'
+app.secret_key = 'default secret key'
 
 # Concert data, scraped from songkick.com
 concerts = pd.read_csv("~/listen-local/app/concerts_clean.csv", index_col=0,
                        encoding='utf-8')
-concerts['date'] = pd.to_datetime(concerts['date'], format="%Y/%m/%d")
 venues = list(set(concerts['venue']))
 
-#  Client Keys
+# Client Keys
 
 def __get_attribute(prop, project):
     result = re.search(r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format(prop),
                        open('config.py').read())
     return result.group(1)
-
 
 CLIENT_ID = __get_attribute('__id__', 'listen-local')
 CLIENT_SECRET = __get_attribute('__secret__', 'listen-local')
@@ -42,18 +42,18 @@ SPOTIFY_API_BASE_URL = "https://api.spotify.com"
 API_VERSION = "v1"
 SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
 
-<<<<<<< HEAD
 # Server-side Parameters
-# CLIENT_SIDE_URL = "https://afeierman.pythonanywhere.com"
+# These lines if you want to run locally
 CLIENT_SIDE_URL = "http://127.0.0.1"
-
-# add these lines if you want to run locally
 PORT = 8080
 REDIRECT_URI = "{}:{}/callback/q".format(CLIENT_SIDE_URL, PORT)
+
+# These lines if you have it hosted
+# CLIENT_SIDE_URL = "https://afeierman.pythonanywhere.com"
 # REDIRECT_URI = "{}/callback/q".format(CLIENT_SIDE_URL)
+
 SCOPE = "playlist-modify-public playlist-modify-private"
 STATE = ""
-
 SHOW_DIALOG_bool = True
 SHOW_DIALOG_str = str(SHOW_DIALOG_bool).lower()
 
@@ -62,23 +62,23 @@ SPOTIPY_CLIENT_ID = CLIENT_ID
 SPOTIPY_CLIENT_SECRET = CLIENT_SECRET
 SPOTIPY_REDIRECT_URI = REDIRECT_URI
 
+#globals that I should fix later, once I understand web frameworks and authorization more
+spotipy_token = ""
+spotipy_username = ""
 
 auth_query_parameters = {
     "response_type": "code",
     "redirect_uri": REDIRECT_URI,
     "scope": SCOPE,
-    "state": STATE,
-    "show_dialog": SHOW_DIALOG_str,
+    # "state": STATE,
+    # "show_dialog": SHOW_DIALOG_str,
     "client_id": CLIENT_ID
 }
 
 @app.route("/")
 def index():
     # Auth Step 1: Authorization
-    url_args = "&".join(["{}={}".format(
-        key, urllib.quote(val)) for key, val in
-        auth_query_parameters.iteritems()])
-
+    url_args = "&".join(["{}={}".format(key, urllib.quote(val)) for key, val in auth_query_parameters.iteritems()])
     auth_url = "{}/?{}".format(SPOTIFY_AUTH_URL, url_args)
     return redirect(auth_url)
 
@@ -124,7 +124,7 @@ def callback():
     # Combine profile and playlist data to display
     display_arr = "You are logged into Spotify as: " + profile_data['id']
 
-    # reluctantly setting global variables for spotipy
+    # setting global variables for spotipy
     spotipy_token = access_token
     spotipy_username = profile_data['id']
 
@@ -141,8 +141,7 @@ def create_playlist():
         dateto = dateto.replace("/", "-")
         venue = request.args.get('venue', 0, type=str)
         success_message = "Success! Playlist created. Check Spotify for a " \
-                          "playlist called: {} to {} at {}".format(
-            datefrom, dateto, venue)
+                          "playlist called: {} to {} at {}".format(datefrom, dateto, venue)
         run_listen_local(venue, start_date=datefrom, end_date=dateto)
         return jsonify(result=success_message)
     except Exception as e:
@@ -160,18 +159,21 @@ def run_listen_local(venue, start_date="2017-08-01",
     global spotipy_token
     global spotipy_username
 
-    playlist_prep = SpotifyPlaylistMaker(songkick_api_key,
+    songkick_retriever = SongkickClient(SONGKICK_API_KEY, venue)
+    concert_json = songkick_retriever.get_venue_concerts_from_query()
+    playlist_prep = SpotifyPlaylistMaker(concert_json, venue,
+                                         spotipy_token,
                                          start_date=start_date,
                                          end_date=end_date,
                                          tracks_to_retrieve=tracks)
 
-    playlist_prepped = playlist_prep.create_venue_songlist_ids(venue)
+    playlist_prepped = playlist_prep.create_venue_songlist_ids()
     playlist_title = playlist_prepped[0]
     track_ids = playlist_prepped[1]
 
-    if SPOTIPY_CLIENT_ID:
-        sp = spotipy.Spotify(auth=SPOTIPY_CLIENT_SECRET)
-        sp.trace = False  # This can be set to True to help with debugging
+    if spotipy_token:
+        sp = spotipy.Spotify(auth=spotipy_token)
+        sp.trace = True  # This can be set to True to help with debugging
         sp.user_playlist_create(spotipy_username, playlist_title)
         playlists = sp.user_playlists(spotipy_username)
         for playlist in playlists['items']:
