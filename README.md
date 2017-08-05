@@ -4,8 +4,6 @@ It _should_ be easy to discover bands playing at local venues. Enter Listen Loca
 
 # Listen Local
 
-#### Discover What's Around the Corner
-=======
 ### Discover What's Around the Corner
 <img src="/app/static/listenlocalimage.png" height="200" width="200">
 
