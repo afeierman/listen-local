@@ -1,12 +1,8 @@
-<<<<<<< HEAD
 import requests
-=======
->>>>>>> 6c6309ddf008f7838b4bf5810d8b944c494152d3
 import pandas as pd
 import spotipy
 
 class SpotifyPlaylistMaker:
-<<<<<<< HEAD
     def __init__(self, songkick_api_key, start_date="2017-01-01", end_date="2017-12-31",
                  tracks_to_retrieve=5):
         self.start_date = start_date
@@ -27,7 +23,7 @@ class SpotifyPlaylistMaker:
     def get_venue_artists(self, venue):
         concert_dates = pd.date_range(start=self.start_date, end=self.end_date,
                                       freq='D')
-=======
+
     def __init__(self, start_date = "2017-01-01", end_date = "2017-12-31",
                  tracks_to_retrieve = 5):
         self.start_date = start_date
@@ -36,7 +32,6 @@ class SpotifyPlaylistMaker:
 
     def get_venue_artists(self, venue):
         concert_dates = pd.date_range(start = self.start_date, end = self.end_date, freq = 'D')
->>>>>>> 6c6309ddf008f7838b4bf5810d8b944c494152d3
         artists = []
         for show in concerts.loc[concerts['venue'] == venue, ['date', 'artist']].itertuples():
             if show[1] in concert_dates:
@@ -75,12 +70,9 @@ class SpotifyPlaylistMaker:
             artist_tracks = sp.artist_top_tracks(artist[1])['tracks']
             if len(artist_tracks) >= self.tracks_to_retrieve:
                 for track in range(0, self.tracks_to_retrieve):
-<<<<<<< HEAD
                     songlist.append((artist_tracks[track]['name'],
                                      artist_tracks[track]['id']))
-=======
                     songlist.append((artist_tracks[track]['name'], artist_tracks[track]['id']))
->>>>>>> 6c6309ddf008f7838b4bf5810d8b944c494152d3
         return songlist
 
     def prepare_song_id_list(self, songlist):
