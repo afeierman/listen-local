@@ -2,11 +2,11 @@ import json
 import requests
 import re
 import base64
-import urllib
+import urllib.parse
 
 import pandas as pd
 from flask import Flask, request, redirect, render_template, jsonify
-from listen_local.listen_local import SongkickClient, SpotifyPlaylistMaker
+from app.listen_local.listen_local import SongkickClient, SpotifyPlaylistMaker
 
 import spotipy
 
@@ -25,10 +25,9 @@ concerts = pd.read_csv("~/listen-local/app/concerts_clean.csv", index_col=0,
 venues = list(set(concerts['venue']))
 
 # Client Keys
-
 def __get_attribute(prop, project):
     result = re.search(r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format(prop),
-                       open('config.py').read())
+                       open('../config.py').read())
     return result.group(1)
 
 CLIENT_ID = __get_attribute('__id__', 'listen-local')
@@ -45,7 +44,7 @@ SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
 # Server-side Parameters
 # These lines if you want to run locally
 CLIENT_SIDE_URL = "http://127.0.0.1"
-PORT = 8080
+PORT = 5000
 REDIRECT_URI = "{}:{}/callback/q".format(CLIENT_SIDE_URL, PORT)
 
 # These lines if you have it hosted
@@ -78,7 +77,7 @@ auth_query_parameters = {
 @app.route("/")
 def index():
     # Auth Step 1: Authorization
-    url_args = "&".join(["{}={}".format(key, urllib.quote(val)) for key, val in auth_query_parameters.iteritems()])
+    url_args = "&".join(["{}={}".format(key, urllib.parse.quote(val)) for key, val in auth_query_parameters.items()])
     auth_url = "{}/?{}".format(SPOTIFY_AUTH_URL, url_args)
     return redirect(auth_url)
 
@@ -91,13 +90,12 @@ def callback():
     auth_token = request.args['code']
     code_payload = {
         "grant_type": "authorization_code",
-        "code": str(auth_token),
+        "code": auth_token,
         "redirect_uri": REDIRECT_URI
     }
-    base64encoded = base64.b64encode("{}:{}".format(CLIENT_ID, CLIENT_SECRET))
-    headers = {"Authorization": "Basic {}".format(base64encoded)}
-    post_request = requests.post(SPOTIFY_TOKEN_URL, data=code_payload,
-                                 headers=headers)
+    base64encoded = base64.b64encode("{}:{}".format(CLIENT_ID, CLIENT_SECRET).encode("utf-8"))
+    headers = {"Authorization": "Basic {}".format(str(base64encoded))}
+    post_request = requests.post(SPOTIFY_TOKEN_URL, data=code_payload, headers=headers)
 
     # Auth Step 5: Tokens are Returned to Application
     response_data = json.loads(post_request.text)
@@ -108,6 +106,8 @@ def callback():
 
     # Auth Step 6: Use the access token to access Spotify API
     authorization_header = {"Authorization":"Bearer {}".format(access_token)}
+	# headers = {'Authorization':authorization,'Accept':'application/json','Content-Type': 'application/x-www-form-urlencoded'}
+
 
     # Get profile data
     user_profile_api_endpoint = "{}/me".format(SPOTIFY_API_URL)

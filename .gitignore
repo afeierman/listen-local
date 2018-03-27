@@ -6,3 +6,4 @@
 env
 dist
 app/config.py
+__pycache__/
